@@ -25,6 +25,10 @@ class ViewController: UIViewController {
     }
     var level = 1
     
+    var clueString = ""
+    var solutionString = ""
+    var letterBits = [String]()
+    
     override func loadView() {
         view = UIView()
         view.backgroundColor = .white
@@ -148,8 +152,9 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        performSelector(inBackground: #selector(loadLevel), with: nil)
+        performSelector(onMainThread: #selector(updateMain), with: nil, waitUntilDone: false)
         
-        loadLevel()
     }
 
     @objc func letterTapped(_ sender: UIButton) {
@@ -198,12 +203,9 @@ class ViewController: UIViewController {
         activatedButtoms.removeAll()
     }
     
-    func loadLevel() {
-        var clueString = ""
-        var solutionString = ""
-        var letterBits = [String]()
-        
-        if let levelFileURL = Bundle.main.url(forResource: "level\(level)", withExtension: "txt") {
+    @objc func loadLevel() {
+
+            if let levelFileURL = Bundle.main.url(forResource: "level\(level)", withExtension: "txt") {
             if let levelContents = try? String(contentsOf: levelFileURL) {
                 var lines = levelContents.components(separatedBy: "\n")
                 lines.shuffle()
@@ -217,24 +219,24 @@ class ViewController: UIViewController {
                     
                     let solutionWord = answer.replacingOccurrences(of: "|", with: "")
                     solutionString += "\(solutionWord.count) letters\n"
-                    solutions.append(solutionWord)
+                    self.solutions.append(solutionWord)
                     
                     let bits = answer.components(separatedBy: "|")
                     letterBits += bits
                 }
             }
         }
-        
+    }
+    
+    @objc func updateMain() {
         cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
-        
         answersLabel.text = solutionString.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-        
+
         letterBits.shuffle()
-        
+
         if letterBits.count == letterButtons.count {
             for i in 0 ..< letterButtons.count {
-                letterButtons[i].setTitle(letterBits[i], for: .normal)
+            letterButtons[i].setTitle(letterBits[i], for: .normal)
             }
         }
     }
